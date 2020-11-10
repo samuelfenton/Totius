@@ -3,30 +3,25 @@
 public class Node
 {
     public Vector2Int m_localPosition = Vector2Int.zero;
-    public float m_height = 0.0f;
+    public Vector3 m_globalPosition = Vector3.zero;
 
-    public CommonEnums.NODE_TYPE m_nodeType = CommonEnums.NODE_TYPE.GRASS;
+    public float m_elevation = 0.0f;
+    public float m_moisture = 0.0f;
+
+    public CommonEnums.NODE_TYPE m_nodeType = CommonEnums.NODE_TYPE.GROUND;
+    public CommonEnums.NODE_BIOME m_nodeBiome = CommonEnums.NODE_BIOME.OCEAN;
 
     private Cell m_parentCell = null;
 
-    public void InitNode(Vector2Int p_localPosition, float p_height, Cell p_parentCell, CommonEnums.NODE_TYPE p_nodeType)
+    public void InitNode(Vector2Int p_localPosition, Cell p_parentCell)
     {
         m_localPosition = p_localPosition;
-        m_height = p_height;
         m_parentCell = p_parentCell;
-        m_nodeType = p_nodeType;
-    }
+        m_elevation = CommonNoiseGen.GetNodeElevation(new Vector2Int(p_localPosition.x + m_parentCell.m_position.x * Cell.CELL_SIZE, p_localPosition.y + m_parentCell.m_position.y * Cell.CELL_SIZE));
+        
+        m_nodeBiome = CommonData.GetNodeBiome(m_elevation, m_moisture);
+        m_nodeType = CommonData.GetNodeType(m_nodeBiome);
 
-    /// <summary>
-    /// Determine a nodes global position
-    /// Take parent cell into account
-    /// </summary>
-    /// <returns>Global position when valid, default to negativeInfinty</returns>
-    private Vector3 GetGlobalPosition()
-    {
-        if (m_parentCell == null)
-            return Vector3.negativeInfinity;
-
-        return new Vector3(m_parentCell.m_position.x * Cell.CELL_SIZE + m_localPosition.x, m_height, m_parentCell.m_position.y * Cell.CELL_SIZE + m_localPosition.y);
+        m_globalPosition = new Vector3(m_parentCell.m_position.x * Cell.CELL_SIZE + m_localPosition.x, m_elevation * CommonData.NODE_MAX_HEIGHT, m_parentCell.m_position.y * Cell.CELL_SIZE + m_localPosition.y);
     }
 }

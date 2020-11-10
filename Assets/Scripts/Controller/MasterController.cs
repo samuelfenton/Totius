@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class MasterController : MonoBehaviour
 {
-    public const int SEED = 1337;
     
     public static MasterController Instance { get; private set; }
 

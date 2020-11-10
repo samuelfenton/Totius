@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(MeshCollider))]
 public class WorldController : MonoBehaviour
 {
@@ -10,8 +11,9 @@ public class WorldController : MonoBehaviour
 
     public Dictionary<Vector2Int, Cell> m_cells = new Dictionary<Vector2Int, Cell>();
 
-    public MeshFilter m_meshFilter = null;
-    public MeshCollider m_meshCollider = null;
+    private MeshFilter m_meshFilter = null;
+    private MeshCollider m_meshCollider = null;
+    private Texture2D m_meshTexture = null;
 
     private Coroutine m_worldBuilder = null;
 
@@ -25,15 +27,21 @@ public class WorldController : MonoBehaviour
         m_meshFilter = GetComponent<MeshFilter>();
         m_meshCollider = GetComponent<MeshCollider>();
 
-        if (m_meshFilter == null || m_meshCollider == null)
+        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+
+        if (m_meshFilter == null || m_meshCollider == null || meshRenderer == null)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogError(name + ": World controller is missing a mesh filter/mesh collider, this is required");
+            Debug.LogError(name + ": World controller is missing a mesh filter/mesh collider/mesh renderer, this is required");
 #endif
 
             Destroy(gameObject);
             return;
-        }    
+        }
+
+        m_meshTexture = new Texture2D(Cell.CELL_SIZE * 3, Cell.CELL_SIZE * 3);
+
+        meshRenderer.material.mainTexture = m_meshTexture;
 
         //TODO if has save files
 
@@ -61,6 +69,9 @@ public class WorldController : MonoBehaviour
     /// <param name="p_newCurrent">New current position</param>
     public IEnumerator UpdateCurrentCell(Vector2Int p_newCurrent)
     {
+        //Plave world controller where it needs to be
+        transform.position = new Vector3(p_newCurrent.x * Cell.CELL_SIZE, 0.0f, p_newCurrent.y * Cell.CELL_SIZE);
+
         //Ensure all cells are generated
         for (int yIndex = -1; yIndex <= 1; yIndex++)
         {
@@ -80,6 +91,10 @@ public class WorldController : MonoBehaviour
             }
         }
 
+        //Check if already building new mesh
+        if (m_worldBuilder != null)
+            StopCoroutine(m_worldBuilder);
+
         m_worldBuilder = StartCoroutine(UpdateWorldMesh(p_newCurrent));
     }
 
@@ -90,22 +105,17 @@ public class WorldController : MonoBehaviour
     /// <returns></returns>
     public IEnumerator UpdateWorldMesh(Vector2Int p_centerPosition)
     {
-        //Check if already building new mesh
-        if(m_worldBuilder != null)
-        {
-            StopCoroutine(m_worldBuilder);
-            m_worldBuilder = null;
-        }
-
         Mesh newMesh = new Mesh();
+        int size3x3 = Cell.CELL_SIZE * 3;
 
         //Build main grid 3x3 size, take 3 frames to complete
-        Node[,] nodeGrid3x3 = new Node[Cell.CELL_SIZE * 3, Cell.CELL_SIZE * 3];
-        for (int yIndex = -1; yIndex <= 1; yIndex++)
+        Node[,] nodeGrid3x3 = new Node[size3x3, size3x3];
+
+        for (int yCellIndex = -1; yCellIndex <= 1; yCellIndex++)
         {
-            for (int xIndex = -1; xIndex <= 1; xIndex++)
+            for (int xCellIndex = -1; xCellIndex <= 1; xCellIndex++)
             {
-                Vector2Int offset = new Vector2Int(xIndex, yIndex);
+                Vector2Int offset = new Vector2Int(xCellIndex, yCellIndex);
                 Vector2Int cellPosition = p_centerPosition + offset;
 
                 AddSubArray(nodeGrid3x3, m_cells[cellPosition].m_nodes, offset);
@@ -113,6 +123,70 @@ public class WorldController : MonoBehaviour
 
             yield return null;
         }
+
+        //Build mesh up from 3x3 grid, takes one frame
+        Vector3[] verts = new Vector3[size3x3 * size3x3];
+        Vector2[] UVs = new Vector2[size3x3 * size3x3];
+        int[] tris = new int[(size3x3 - 1) * (size3x3 - 1) * 6];
+
+        //verts/uvs
+        for (int yVertIndex = 0; yVertIndex < size3x3; yVertIndex++)
+        {
+            for (int xVertIndex = 0; xVertIndex < size3x3; xVertIndex++)
+            {
+                int vertIndex = xVertIndex + yVertIndex * size3x3;
+
+                verts[vertIndex] = nodeGrid3x3[xVertIndex, yVertIndex].m_globalPosition - transform.position; //Want local relative to center
+                UVs[vertIndex] = new Vector2((float)xVertIndex/size3x3, (float)yVertIndex/ size3x3);
+            }
+        }
+
+        //tris
+        for (int yIndex = 0; yIndex < size3x3 - 1; yIndex++)
+        {
+            for (int xIndex = 0; xIndex < size3x3 - 1; xIndex++)
+            {
+                int currentVertIndex = xIndex + yIndex * size3x3;
+                int triStartingIndex = (xIndex + yIndex * (size3x3 - 1)) * 6;
+
+                tris[triStartingIndex + 0] = currentVertIndex; //Top Left
+                tris[triStartingIndex + 1] = currentVertIndex + size3x3; //Bottom Left
+                tris[triStartingIndex + 2] = currentVertIndex + 1; //Top Right
+                tris[triStartingIndex + 3] = currentVertIndex + 1; //Top Right
+                tris[triStartingIndex + 4] = currentVertIndex + size3x3; //Bottom Left
+                tris[triStartingIndex + 5] = currentVertIndex + 1 + size3x3; //Bottom Right
+
+            }
+        }
+        yield return null;
+
+        //Build texture map
+        Color[] textureColours = new Color[size3x3 * size3x3];
+        for (int yVertIndex = 0; yVertIndex < size3x3; yVertIndex++)
+        {
+            for (int xVertIndex = 0; xVertIndex < size3x3; xVertIndex++)
+            {
+                int vertIndex = xVertIndex + yVertIndex * size3x3;
+
+                textureColours[vertIndex] = CommonData.m_nodeTypeColor[nodeGrid3x3[xVertIndex, yVertIndex].m_nodeBiome];
+            }
+        }
+        yield return null;
+
+        //Build mesh 1 frame
+        newMesh.vertices = verts;
+        newMesh.uv = UVs;
+        newMesh.SetTriangles(tris, 0);
+        newMesh.RecalculateNormals();
+
+        yield return null;
+
+        //Apply 
+        m_meshFilter.mesh = newMesh;
+        m_meshCollider.sharedMesh = newMesh;
+
+        m_meshTexture.SetPixels(textureColours);
+        m_meshTexture.Apply();
 
         m_worldBuilder = null;
     }
