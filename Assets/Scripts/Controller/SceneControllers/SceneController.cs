@@ -7,15 +7,6 @@ public class SceneController : MonoBehaviour
     protected UIController m_UIController = null;
 
     /// <summary>
-    /// Awake on scene controller
-    /// Note: Do not override, this is used to ensure update wont be called till InitScene() has been
-    /// </summary>
-    protected void Awake()
-    {
-        enabled = false;
-    }
-
-    /// <summary>
     /// Initialise the scene controller, should be called from master controller
     /// Note: Dont use start/awake on controller, this ensures correct load order
     /// </summary>

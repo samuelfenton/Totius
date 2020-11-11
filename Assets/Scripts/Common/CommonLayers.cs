@@ -6,6 +6,8 @@ public class CommonLayers : MonoBehaviour
 {
     public static int m_enviromentMask = 0;
     public static int m_enviromentLayer = 0;
+    public static int m_terrainMask = 0;
+    public static int m_terrainLayer = 0;
     public static int m_backgroundMask = 0;
     public static int m_backgroundLayer = 0;
 
@@ -25,6 +27,7 @@ public class CommonLayers : MonoBehaviour
     {
         //Masks
         m_enviromentMask = LayerMask.GetMask("Enviroment");
+        m_terrainMask = LayerMask.GetMask("Terrain");
         m_backgroundMask = LayerMask.GetMask("Background");
 
         m_hitBoxMask = LayerMask.GetMask("Hit Box");
@@ -33,6 +36,7 @@ public class CommonLayers : MonoBehaviour
 
         //Layer
         m_enviromentLayer = (int)Mathf.Log(m_enviromentMask, 2);
+        m_terrainLayer = (int)Mathf.Log(m_terrainMask, 2);
         m_backgroundLayer = (int)Mathf.Log(m_backgroundMask, 2);
 
         m_hitBoxLayer = (int)Mathf.Log(m_hitBoxMask, 2);

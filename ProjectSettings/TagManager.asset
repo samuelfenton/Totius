@@ -13,14 +13,14 @@ TagManager:
   - UI
   - 
   - 
+  - Enviroment
+  - Terrain
+  - Background
   - 
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Hit Box
+  - Hurt Box
+  - Push Box
   - 
   - 
   - 

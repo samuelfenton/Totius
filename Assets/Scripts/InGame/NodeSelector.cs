@@ -35,6 +35,8 @@ public class NodeSelector : MonoBehaviour
         //Get selected node
         Vector3 placementVector = m_followObject.transform.position + m_followObject.transform.forward * m_selectorDistance;
 
+        //TODO first attempt to get ray cast position, if not possible, get closet within threshold, else nothing
+
         Node selectedNode = m_inGameSceneController.m_worldController.GetClosestNode(placementVector);
 
         if (selectedNode == null)

@@ -219,8 +219,8 @@ public class WorldController : MonoBehaviour
         yield return null;
 
         //Apply 
-        m_meshFilter.mesh = newMesh;
-        m_meshCollider.mesh = newMesh;
+        m_meshFilter.sharedMesh = newMesh;
+        m_meshCollider.sharedMesh = newMesh;
 
         m_meshTexture.SetPixels(textureColours);
         m_meshTexture.Apply();
@@ -274,7 +274,7 @@ public class WorldController : MonoBehaviour
         verts[nodeIndex] = new Vector3(node3x3Position.x - Cell.CELL_SIZE, p_node.m_globalPosition.y, node3x3Position.y - Cell.CELL_SIZE); //Want local relative to center
         textureColours[nodeIndex] = CommonData.m_nodeTypeColor[p_node.m_nodeBiome];
 
-        Mesh currentMesh = m_meshFilter.mesh;
+        Mesh currentMesh = m_meshFilter.sharedMesh;
 
         //Apply changes
         currentMesh.vertices = verts;

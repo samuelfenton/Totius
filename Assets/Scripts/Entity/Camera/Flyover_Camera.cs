@@ -72,6 +72,9 @@ public class Flyover_Camera : Camera_Entity
     {
         base.FixedUpdateEntity();
 
+        Debug.Log(m_cumulativeTranslation);
+
+
         ApplyCumulativeInput();
     }
 

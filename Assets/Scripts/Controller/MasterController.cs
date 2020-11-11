@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class MasterController : MonoBehaviour
 {
-    
     public static MasterController Instance { get; private set; }
  
     [HideInInspector]
@@ -50,5 +49,16 @@ public class MasterController : MonoBehaviour
     private void Update()
     {
         m_input.UpdateInput();
+    }
+
+    private void loadscene()
+    {
+        /// <summary>
+        /// Awake on scene controller
+        /// Note: Do not override, this is used to ensure update wont be called till InitScene() has been
+        /// </summary>
+        //Ensure that the laodede scene controlers are set to not enabled.
+        //Only enable as they are loaded in
+
     }
 }
