@@ -6,9 +6,12 @@ public class MasterController : MonoBehaviour
 {
     
     public static MasterController Instance { get; private set; }
+ 
+    [HideInInspector]
+    public InputController m_input = null;
 
-
-    private WorldController m_worldController = null;
+    [HideInInspector]
+    public SceneController m_sceneController = null;
 
     /// <summary>
     /// Setup singleton functionality for the master controller
@@ -29,25 +32,23 @@ public class MasterController : MonoBehaviour
 
         DontDestroyOnLoad(topObject);
 
-        InitInGame();
-    }
+        m_input = gameObject.AddComponent<InputController>();
 
-    /// <summary>
-    /// Initialise the in game scene
-    /// </summary>
-    private void InitInGame()
-    {
-        m_worldController = FindObjectOfType<WorldController>();
+        m_sceneController = FindObjectOfType<SceneController>();
 
-        if(m_worldController == null)
+        if (m_sceneController == null)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogError(name + ": Unable to find WorldController.cs, this is required within game scene");
+            Debug.LogError(name + ": Unable to find SceneController.cs, this is required within game scene");
 #endif
+            return;
         }
-        else
-        {
-            m_worldController.InitWorld();
-        }
+
+        m_sceneController.InitScene();
+    }
+
+    private void Update()
+    {
+        m_input.UpdateInput();
     }
 }

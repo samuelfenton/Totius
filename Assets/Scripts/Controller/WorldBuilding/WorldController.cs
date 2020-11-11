@@ -63,14 +63,33 @@ public class WorldController : MonoBehaviour
     }
 
     /// <summary>
+    /// Called to update visual cell
+    /// TODO ensure isnt currently updating
+    /// </summary>
+    /// <param name="">New cell position</param>
+    public void EnteredNewCell(Vector2Int p_newCurrent)
+    {
+        StartCoroutine(UpdateCurrentCell(p_newCurrent));
+    }
+
+    /// <summary>
     /// Update the current cell, load/generate neighbours as needed
     /// Build new mesh
+    /// 
+    ///     -------
+    ///     | | | |
+    ///     -------
+    ///     | | | |
+    ///     --x----
+    ///     | | | |
+    ///     -------
+    ///     x is where world controller is placed
+    ///     mesh is built with this in mind
+    /// 
     /// </summary>
     /// <param name="p_newCurrent">New current position</param>
-    public IEnumerator UpdateCurrentCell(Vector2Int p_newCurrent)
+    private IEnumerator UpdateCurrentCell(Vector2Int p_newCurrent)
     {
-        //Plave world controller where it needs to be
-        transform.position = new Vector3(p_newCurrent.x * Cell.CELL_SIZE, 0.0f, p_newCurrent.y * Cell.CELL_SIZE);
 
         //Ensure all cells are generated
         for (int yIndex = -1; yIndex <= 1; yIndex++)
@@ -103,7 +122,7 @@ public class WorldController : MonoBehaviour
     /// </summary>
     /// <param name="p_centerPosition">Center cell</param>
     /// <returns></returns>
-    public IEnumerator UpdateWorldMesh(Vector2Int p_centerPosition)
+    private IEnumerator UpdateWorldMesh(Vector2Int p_centerPosition)
     {
         Mesh newMesh = new Mesh();
         int size3x3 = Cell.CELL_SIZE * 3;
@@ -136,7 +155,7 @@ public class WorldController : MonoBehaviour
             {
                 int vertIndex = xVertIndex + yVertIndex * size3x3;
 
-                verts[vertIndex] = nodeGrid3x3[xVertIndex, yVertIndex].m_globalPosition - transform.position; //Want local relative to center
+                verts[vertIndex] = new Vector3(xVertIndex - Cell.CELL_SIZE, nodeGrid3x3[xVertIndex, yVertIndex].m_globalPosition.y, yVertIndex - Cell.CELL_SIZE); //Want local relative to center
                 UVs[vertIndex] = new Vector2((float)xVertIndex/size3x3, (float)yVertIndex/ size3x3);
             }
         }
@@ -155,7 +174,6 @@ public class WorldController : MonoBehaviour
                 tris[triStartingIndex + 3] = currentVertIndex + 1; //Top Right
                 tris[triStartingIndex + 4] = currentVertIndex + size3x3; //Bottom Left
                 tris[triStartingIndex + 5] = currentVertIndex + 1 + size3x3; //Bottom Right
-
             }
         }
         yield return null;
@@ -187,6 +205,9 @@ public class WorldController : MonoBehaviour
 
         m_meshTexture.SetPixels(textureColours);
         m_meshTexture.Apply();
+
+        //Place world controller where it needs to be
+        transform.position = new Vector3(p_centerPosition.x * Cell.CELL_SIZE, 0.0f, p_centerPosition.y * Cell.CELL_SIZE);
 
         m_worldBuilder = null;
     }
