@@ -6,7 +6,7 @@ public class CommonNoiseGen : MonoBehaviour
 {
     public const int SEED = 1337;
 
-    public const float NOISE_SMOOTHNESS = 100.0f;
+    public const float NOISE_SMOOTHNESS = 20.0f;
     public const float NOISE_FREQUENCY = 1.0f / NOISE_SMOOTHNESS;
 
     public const float NOISE_REDISTRIBUTION_VAL = 2.2f;
@@ -27,6 +27,8 @@ public class CommonNoiseGen : MonoBehaviour
             0.5f * Mathf.PerlinNoise(2.0f * smoothedPosition.x, 2.0f * smoothedPosition.y) +
             0.25f * Mathf.PerlinNoise(4.0f * smoothedPosition.x, 4.0f * smoothedPosition.y) +
             0.125f * Mathf.PerlinNoise(8.0f * smoothedPosition.x, 8.0f * smoothedPosition.y);
+
+        elevation /= 1.5f; //Crush down because of extra octaves
 
         return Mathf.Pow(elevation, NOISE_REDISTRIBUTION_VAL);
     }

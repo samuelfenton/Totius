@@ -5,6 +5,7 @@ using UnityEngine;
 public class Flyover_Camera : Camera_Entity
 {
     #region Movement Variables
+    [Header("Movement Variables")]
     [Tooltip("m/s")]
     public float m_forwardSpeed = 10.0f;
     [Tooltip("m/s")]
@@ -22,6 +23,10 @@ public class Flyover_Camera : Camera_Entity
     #endregion
 
     #region Cell Traversal Variables
+    [Header("Cell Traversal Variables")]
+    [Tooltip("How far past the edge till traversal is considered, 0.0 means on edge, 1.0 means the next cells edge")]
+    [Range(0.0f, 1.0f)]
+    public float m_traversalRange = 0.5f;
     private Vector2Int m_previousCell = Vector2Int.zero;
     #endregion
 
@@ -38,6 +43,12 @@ public class Flyover_Camera : Camera_Entity
         base.InitEntity();
 
         m_inGameSceneController = (InGame_SceneController)MasterController.Instance.m_sceneController;
+
+        //Find node selector and set it up
+        NodeSelector nodeSelector = FindObjectOfType<NodeSelector>();
+
+        if (nodeSelector != null)
+            nodeSelector.Init(gameObject);
     }
 
     /// <summary>
@@ -104,11 +115,18 @@ public class Flyover_Camera : Camera_Entity
 
     }
 
+    /// <summary>
+    /// Called every frame
+    /// Update what cell we are in as needed
+    /// </summary>
     private void UpdateCellTraversal()
     {
-        Vector2Int currentCell = DetermineCurrentCell();
+        if (!IsReadyForCellTraversal())
+            return;
 
-        if(currentCell != m_previousCell) //Moved to new cell
+        Vector2Int currentCell = m_inGameSceneController.m_worldController.DetermineCell(transform.position);
+
+        if(currentCell != m_previousCell) //Ensure moved to new cell
         {
             m_inGameSceneController.m_worldController.EnteredNewCell(currentCell);
             m_previousCell = currentCell;
@@ -116,24 +134,17 @@ public class Flyover_Camera : Camera_Entity
     }
 
     /// <summary>
-    /// Given position, get the cell the object is currently in
-    /// TODO Include a threshold, stops being on the edge constantly updating 
+    /// Have we moved far enough to consider cell traversal
     /// </summary>
-    /// <returns>Cell position</returns>
-    private Vector2Int DetermineCurrentCell()
+    /// <returns></returns>
+    private bool IsReadyForCellTraversal()
     {
-        Vector2Int currentCell = Vector2Int.zero;
+        Vector2 previousCellCenter = Cell.GetCellCenter(m_previousCell);
 
-        //Get cell, only valid technique when positive
-        currentCell.x = Mathf.FloorToInt(transform.position.x) / Cell.CELL_SIZE;
-        currentCell.y = Mathf.FloorToInt(transform.position.z) / Cell.CELL_SIZE;
+        Vector2 distanceFromCenter = new Vector2(Mathf.Abs(transform.position.x - previousCellCenter.x), Mathf.Abs(transform.position.z - previousCellCenter.y));
 
-        //Fix result for negitive positions
-        if (transform.position.x < 0.0f)
-            currentCell.x -= 1;
-        if (transform.position.z < 0.0f)
-            currentCell.y -= 1;
+        float largestDistance = distanceFromCenter.x > distanceFromCenter.y ? distanceFromCenter.x : distanceFromCenter.y;
 
-        return currentCell;
+        return largestDistance >= Cell.CELL_SIZE_HALF + Cell.CELL_SIZE_HALF * m_traversalRange; 
     }
 }
