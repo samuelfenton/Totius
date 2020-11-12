@@ -13,6 +13,7 @@ public class WorldController : MonoBehaviour
 
     private MeshFilter m_meshFilter = null;
     private MeshCollider m_meshCollider = null;
+    private Mesh m_mesh = null;
     private Texture2D m_meshTexture = null;
 
     private Vector2Int m_currentTraversalToPosition = Vector2Int.zero;
@@ -40,6 +41,49 @@ public class WorldController : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
+        //Build new mesh
+        m_mesh = new Mesh();
+        Vector3[] verts = new Vector3[Cell.CELL_SIZE_3X * Cell.CELL_SIZE_3X];
+        Vector2[] UVs = new Vector2[Cell.CELL_SIZE_3X * Cell.CELL_SIZE_3X];
+        int[] tris = new int[(Cell.CELL_SIZE_3X - 1) * (Cell.CELL_SIZE_3X - 1) * 6];
+
+        //verts/uvs
+        for (int yVertIndex = 0; yVertIndex < Cell.CELL_SIZE_3X; yVertIndex++)
+        {
+            for (int xVertIndex = 0; xVertIndex < Cell.CELL_SIZE_3X; xVertIndex++)
+            {
+                int vertIndex = xVertIndex + yVertIndex * Cell.CELL_SIZE_3X;
+
+                verts[vertIndex] = new Vector3(xVertIndex - Cell.CELL_SIZE, 0.0f, yVertIndex - Cell.CELL_SIZE); //Want local relative to center
+                UVs[vertIndex] = new Vector2((float)xVertIndex / Cell.CELL_SIZE_3X, (float)yVertIndex / Cell.CELL_SIZE_3X);
+            }
+        }
+
+        //tris
+        for (int yIndex = 0; yIndex < Cell.CELL_SIZE_3X - 1; yIndex++)
+        {
+            for (int xIndex = 0; xIndex < Cell.CELL_SIZE_3X - 1; xIndex++)
+            {
+                int currentVertIndex = xIndex + yIndex * Cell.CELL_SIZE_3X;
+                int triStartingIndex = (xIndex + yIndex * (Cell.CELL_SIZE_3X - 1)) * 6;
+
+                tris[triStartingIndex + 0] = currentVertIndex; //Top Left
+                tris[triStartingIndex + 1] = currentVertIndex + Cell.CELL_SIZE_3X; //Bottom Left
+                tris[triStartingIndex + 2] = currentVertIndex + 1; //Top Right
+                tris[triStartingIndex + 3] = currentVertIndex + 1; //Top Right
+                tris[triStartingIndex + 4] = currentVertIndex + Cell.CELL_SIZE_3X; //Bottom Left
+                tris[triStartingIndex + 5] = currentVertIndex + 1 + Cell.CELL_SIZE_3X; //Bottom Right
+            }
+        }
+
+        m_mesh.vertices = verts;
+        m_mesh.uv = UVs;
+        m_mesh.SetTriangles(tris, 0);
+
+        //Apply new mesh
+        m_meshFilter.mesh = m_mesh;
+        m_meshCollider.sharedMesh = m_mesh;
 
         m_meshTexture = new Texture2D(Cell.CELL_SIZE * 3, Cell.CELL_SIZE * 3);
 
@@ -76,6 +120,8 @@ public class WorldController : MonoBehaviour
 
         if (m_currentTraversalToPosition == p_newCurrent) //Already traversing towards
             return;
+
+        m_currentTraversalToPosition = p_newCurrent;
 
         //If already in progress, stop
         if (m_meshBuilderCoroutine != null)
@@ -135,6 +181,8 @@ public class WorldController : MonoBehaviour
             yield return null;
 
         m_traversingCoroutine = null;
+
+        m_currentCell = m_currentTraversalToPosition;
     }
 
     /// <summary>
@@ -144,8 +192,6 @@ public class WorldController : MonoBehaviour
     /// <returns></returns>
     private IEnumerator UpdateWorldMesh(Vector2Int p_centerPosition)
     {
-        Mesh newMesh = new Mesh();
-
         //Build main grid 3x3 size, take 3 frames to complete
         Node[,] nodeGrid3x3 = new Node[Cell.CELL_SIZE_3X, Cell.CELL_SIZE_3X];
 
@@ -164,8 +210,6 @@ public class WorldController : MonoBehaviour
 
         //Build mesh up from 3x3 grid, takes one frame
         Vector3[] verts = new Vector3[Cell.CELL_SIZE_3X * Cell.CELL_SIZE_3X];
-        Vector2[] UVs = new Vector2[Cell.CELL_SIZE_3X * Cell.CELL_SIZE_3X];
-        int[] tris = new int[(Cell.CELL_SIZE_3X - 1) * (Cell.CELL_SIZE_3X - 1) * 6];
 
         //verts/uvs
         for (int yVertIndex = 0; yVertIndex < Cell.CELL_SIZE_3X; yVertIndex++)
@@ -175,26 +219,9 @@ public class WorldController : MonoBehaviour
                 int vertIndex = xVertIndex + yVertIndex * Cell.CELL_SIZE_3X;
 
                 verts[vertIndex] = new Vector3(xVertIndex - Cell.CELL_SIZE, nodeGrid3x3[xVertIndex, yVertIndex].m_globalPosition.y, yVertIndex - Cell.CELL_SIZE); //Want local relative to center
-                UVs[vertIndex] = new Vector2((float)xVertIndex/ Cell.CELL_SIZE_3X, (float)yVertIndex/ Cell.CELL_SIZE_3X);
             }
         }
 
-        //tris
-        for (int yIndex = 0; yIndex < Cell.CELL_SIZE_3X - 1; yIndex++)
-        {
-            for (int xIndex = 0; xIndex < Cell.CELL_SIZE_3X - 1; xIndex++)
-            {
-                int currentVertIndex = xIndex + yIndex * Cell.CELL_SIZE_3X;
-                int triStartingIndex = (xIndex + yIndex * (Cell.CELL_SIZE_3X - 1)) * 6;
-
-                tris[triStartingIndex + 0] = currentVertIndex; //Top Left
-                tris[triStartingIndex + 1] = currentVertIndex + Cell.CELL_SIZE_3X; //Bottom Left
-                tris[triStartingIndex + 2] = currentVertIndex + 1; //Top Right
-                tris[triStartingIndex + 3] = currentVertIndex + 1; //Top Right
-                tris[triStartingIndex + 4] = currentVertIndex + Cell.CELL_SIZE_3X; //Bottom Left
-                tris[triStartingIndex + 5] = currentVertIndex + 1 + Cell.CELL_SIZE_3X; //Bottom Right
-            }
-        }
         yield return null;
 
         //Build texture map
@@ -208,22 +235,11 @@ public class WorldController : MonoBehaviour
                 textureColours[vertIndex] = CommonData.m_nodeTypeColor[nodeGrid3x3[xVertIndex, yVertIndex].m_nodeBiome];
             }
         }
+
         yield return null;
 
         //Build mesh 1 frame
-        newMesh.vertices = verts;
-        newMesh.uv = UVs;
-        newMesh.SetTriangles(tris, 0);
-        newMesh.RecalculateNormals();
-
-        yield return null;
-
-        //Apply 
-        m_meshFilter.sharedMesh = newMesh;
-        m_meshCollider.sharedMesh = newMesh;
-
-        m_meshTexture.SetPixels(textureColours);
-        m_meshTexture.Apply();
+        RebuiltMesh(verts, textureColours);
 
         //Place world controller where it needs to be
         transform.position = new Vector3(p_centerPosition.x * Cell.CELL_SIZE, 0.0f, p_centerPosition.y * Cell.CELL_SIZE);
@@ -254,34 +270,122 @@ public class WorldController : MonoBehaviour
         }
     }
 
+    private void RebuiltMesh(Vector3[] p_verts, Color[] p_textureColors)
+    {
+        m_mesh.vertices = p_verts;
+        m_mesh.RecalculateNormals();
+        
+        m_meshCollider.sharedMesh = null;
+        m_meshCollider.sharedMesh = m_mesh;
+
+        m_meshTexture.SetPixels(p_textureColors);
+        m_meshTexture.Apply();
+    }
+
     /// <summary>
     /// When node has been changed, update its postion in mesh vertex, and texture map
     /// </summary>
     /// <param name="p_node">Node requiring update</param>
     public void UpdateMeshNode(Node p_node)
     {
-        Vector3[] verts = m_meshFilter.mesh.vertices;
+        Vector3[] verts = m_mesh.vertices;
         Color[] textureColours = m_meshTexture.GetPixels();
 
-        Vector2Int nodeCellDir = p_node.m_parentCell.m_cellGridPosition - m_currentCell;
-        Vector2Int node3x3Position = new Vector2Int(Cell.CELL_SIZE * (nodeCellDir.x + 1) + p_node.m_localPosition.x, Cell.CELL_SIZE * (nodeCellDir.y + 1) + p_node.m_localPosition.y);
+        Vector2Int nodeCellDir = p_node.m_parentCell.m_cellGrid - m_currentCell;
+        Vector2Int node3x3Position = new Vector2Int(Cell.CELL_SIZE * (nodeCellDir.x + 1) + p_node.m_nodeGrid.x, Cell.CELL_SIZE * (nodeCellDir.y + 1) + p_node.m_nodeGrid.y);
 
-        int nodeIndex = node3x3Position.x + node3x3Position.y * Cell.CELL_SIZE_3X;
+        int vertIndex = node3x3Position.x + node3x3Position.y * Cell.CELL_SIZE_3X;
 
-        if (nodeIndex >= verts.Length || nodeIndex >= textureColours.Length) //Early breakout
+        if (vertIndex < 0 || vertIndex >= verts.Length || vertIndex >= textureColours.Length) //Early breakout
             return;
 
-        verts[nodeIndex] = new Vector3(node3x3Position.x - Cell.CELL_SIZE, p_node.m_globalPosition.y, node3x3Position.y - Cell.CELL_SIZE); //Want local relative to center
-        textureColours[nodeIndex] = CommonData.m_nodeTypeColor[p_node.m_nodeBiome];
-
-        Mesh currentMesh = m_meshFilter.sharedMesh;
+        verts[vertIndex] = new Vector3(node3x3Position.x - Cell.CELL_SIZE, p_node.m_globalPosition.y, node3x3Position.y - Cell.CELL_SIZE); //Want local relative to center
+        textureColours[vertIndex] = CommonData.m_nodeTypeColor[p_node.m_nodeBiome];
 
         //Apply changes
-        currentMesh.vertices = verts;
-        currentMesh.RecalculateNormals();
+        RebuiltMesh(verts, textureColours);
+    }
 
-        m_meshTexture.SetPixels(textureColours);
-        m_meshTexture.Apply();
+    /// <summary>
+    /// When node has been changed, update its postion in mesh vertex, and texture map
+    /// This varient is use to update multiple at once
+    /// </summary>
+    /// <param name="p_nodes">Nodes requiring update</param>
+    public void UpdateMeshNodeGroup(Node[] p_nodes)
+    {
+        Vector3[] verts = m_mesh.vertices;
+        Color[] textureColours = m_meshTexture.GetPixels();
+
+        for (int nodeIndex = 0; nodeIndex < p_nodes.Length; nodeIndex++)
+        {
+            Node node = p_nodes[nodeIndex];
+
+            Vector2Int nodeCellDir = node.m_parentCell.m_cellGrid - m_currentCell;
+            Vector2Int node3x3Position = new Vector2Int(Cell.CELL_SIZE * (nodeCellDir.x + 1) + node.m_nodeGrid.x, Cell.CELL_SIZE * (nodeCellDir.y + 1) + node.m_nodeGrid.y);
+
+            int vertIndex = node3x3Position.x + node3x3Position.y * Cell.CELL_SIZE_3X;
+
+            if (vertIndex < 0 || vertIndex >= verts.Length || vertIndex >= textureColours.Length) //Early breakout
+                return;
+
+            verts[vertIndex] = new Vector3(node3x3Position.x - Cell.CELL_SIZE, node.m_globalPosition.y, node3x3Position.y - Cell.CELL_SIZE); //Want local relative to center
+            textureColours[vertIndex] = CommonData.m_nodeTypeColor[node.m_nodeBiome];
+        }
+
+        //Apply changes
+        RebuiltMesh(verts, textureColours);
+    }
+
+    /// <summary>
+    /// Given a origin node, get node using offset
+    /// </summary>
+    /// <param name="p_orgin">Origin node</param>
+    /// <param name="p_offset">Offset to travel looking for node</param>
+    /// <returns>Node at given position, else null</returns>
+    public Node GetNodeFromOffset(Node p_orgin, Vector2Int p_offset)
+    {
+        //Grid of nded
+        GlobalNodeGridToLocal(p_orgin.m_globalNodeGrid + p_offset, out Vector2Int p_cellGrid, out Vector2Int p_localNodeGrid);
+
+        if(m_cells.TryGetValue(p_cellGrid, out Cell cell))
+        {
+            return cell.GetNode(p_localNodeGrid);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Convert a glbal position into a cell grid and local node grid
+    /// Doesnt guarentee node exists
+    /// </summary>
+    /// <param name="p_globalNodeGrid">Global grid of node</param>
+    /// <param name="p_cellGrid">Cell grid for node</param>
+    /// <param name="p_localNodeGrid">Local node grid within cell</param>
+    public void GlobalNodeGridToLocal(Vector2Int p_globalNodeGrid, out Vector2Int p_cellGrid, out Vector2Int p_localNodeGrid)
+    {
+        p_cellGrid = Vector2Int.zero;
+        p_localNodeGrid = Vector2Int.zero;
+
+        //Get cell, only valid technique when positive
+        p_cellGrid.x = p_globalNodeGrid.x / Cell.CELL_SIZE;
+        p_cellGrid.y = p_globalNodeGrid.y / Cell.CELL_SIZE;
+
+        //Fix result for negitive positions
+        if (p_globalNodeGrid.x < 0)
+            p_cellGrid.x -= 1;
+        if (p_globalNodeGrid.y < 0)
+            p_cellGrid.y -= 1;
+
+        //Get local grid, only valid technique when positive
+        p_localNodeGrid.x = p_globalNodeGrid.x % Cell.CELL_SIZE;
+        p_localNodeGrid.y = p_globalNodeGrid.y % Cell.CELL_SIZE;
+
+        //Fix result for negitive positions
+        if (p_globalNodeGrid.x < 0)
+            p_localNodeGrid.x += Cell.CELL_SIZE;
+        if (p_globalNodeGrid.y < 0)
+            p_localNodeGrid.y += Cell.CELL_SIZE;
     }
 
     /// <summary>

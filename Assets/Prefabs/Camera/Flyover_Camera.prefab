@@ -15,7 +15,10 @@ MonoBehaviour:
   m_forwardSpeed: 10
   m_rightSpeed: 10
   m_upSpeed: 10
+  m_sprintModifierSpeed: 4
   m_rotationSpeed: 90
+  m_maxCameraAngle: 80
+  m_traversalRange: 0.5
 --- !u!1001 &1239078399948943608
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -25,7 +28,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1717785317976313954, guid: ab7083b4489b9e349867615a01cbf5ed, type: 3}
       propertyPath: m_Name
-      value: FlyBy_Camera
+      value: Flyover_Camera
+      objectReference: {fileID: 0}
+    - target: {fileID: 1717785317976313954, guid: ab7083b4489b9e349867615a01cbf5ed, type: 3}
+      propertyPath: m_Layer
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 1717785317976313959, guid: ab7083b4489b9e349867615a01cbf5ed, type: 3}
       propertyPath: m_LocalPosition.x

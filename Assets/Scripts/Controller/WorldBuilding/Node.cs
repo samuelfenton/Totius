@@ -2,7 +2,8 @@
 
 public class Node
 {
-    public Vector2Int m_localPosition = Vector2Int.zero;
+    public Vector2Int m_nodeGrid = Vector2Int.zero;
+    public Vector2Int m_globalNodeGrid = Vector2Int.zero;
     public Vector3 m_globalPosition = Vector3.zero;
 
     public float m_elevation = 0.0f;
@@ -19,34 +20,35 @@ public class Node
     /// <summary>
     /// Init node
     /// </summary>
-    /// <param name="p_localPosition">Local position in cell</param>
+    /// <param name="p_localGrid">Local position in cell</param>
     /// <param name="p_elevation">Elevation of node</param>
     /// <param name="p_moisture">Moisture of node</param>
     /// <param name="p_parentCell">Cell this node is child of</param>
-    public void InitNode(Vector2Int p_localPosition, float p_elevation, float p_moisture, Cell p_parentCell)
+    public void InitNode(Vector2Int p_localGrid, float p_elevation, float p_moisture, Cell p_parentCell)
     {
-        m_localPosition = p_localPosition;
+        m_nodeGrid = p_localGrid;
+
         m_elevation = Mathf.Clamp(p_elevation, 0.0f, 1.0f);
         m_moisture = Mathf.Clamp(p_moisture, 0.0f, 1.0f);
         m_parentCell = p_parentCell;
-
+        
         m_inGameSceneController = (InGame_SceneController)MasterController.Instance.m_sceneController;
+
+        m_globalNodeGrid = new Vector2Int(p_parentCell.m_cellGrid.x * Cell.CELL_SIZE + m_nodeGrid.x, p_parentCell.m_cellGrid.y * Cell.CELL_SIZE + m_nodeGrid.y);
 
         UpdateStats();
     }
 
     /// <summary>
-    /// Modify elevation by value
+    /// Modify elevation by distance
     /// Still clamps
     /// </summary>
     /// <param name="p_newVal">New value</param>
     public void ModifyElevation(float p_value)
     {
-        m_elevation = Mathf.Clamp(m_elevation + p_value, 0.0f, 1.0f);
+        m_elevation = Mathf.Clamp(m_elevation + (p_value / CommonData.NODE_MAX_HEIGHT), 0.0f, 1.0f); // p_value/CommonData.NODE_MAX_HEIGHT to get actual elevation change for a given distance
 
         UpdateStats();
-
-        m_inGameSceneController.m_worldController.UpdateMeshNode(this);
     }
 
     /// <summary>
@@ -59,8 +61,6 @@ public class Node
         m_elevation = Mathf.Clamp(p_newVal, 0.0f, 1.0f);
 
         UpdateStats();
-
-        m_inGameSceneController.m_worldController.UpdateMeshNode(this);
     }
 
     /// <summary>
@@ -73,8 +73,6 @@ public class Node
         m_elevation = Mathf.Clamp(m_moisture + p_value, 0.0f, 1.0f);
 
         UpdateStats();
-
-        m_inGameSceneController.m_worldController.UpdateMeshNode(this);
     }
 
     /// <summary>
@@ -87,15 +85,16 @@ public class Node
         m_moisture = Mathf.Clamp(p_newVal, 0.0f, 1.0f);
 
         UpdateStats();
-
-        m_inGameSceneController.m_worldController.UpdateMeshNode(this);
     }
 
+    /// <summary>
+    /// Update the nodes stats beased off its elevation and moisture
+    /// </summary>
     private void UpdateStats()
     {
         m_nodeBiome = CommonData.GetNodeBiome(m_elevation, m_moisture);
         m_nodeType = CommonData.GetNodeType(m_nodeBiome);
 
-        m_globalPosition = new Vector3(m_parentCell.m_cellGridPosition.x * Cell.CELL_SIZE + m_localPosition.x, m_elevation * CommonData.NODE_MAX_HEIGHT, m_parentCell.m_cellGridPosition.y * Cell.CELL_SIZE + m_localPosition.y);
+        m_globalPosition = new Vector3(m_parentCell.m_cellGrid.x * Cell.CELL_SIZE + m_nodeGrid.x, m_elevation * CommonData.NODE_MAX_HEIGHT, m_parentCell.m_cellGrid.y * Cell.CELL_SIZE + m_nodeGrid.y);
     }
 }

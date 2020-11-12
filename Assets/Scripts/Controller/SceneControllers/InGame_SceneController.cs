@@ -4,8 +4,14 @@ using UnityEngine;
 
 public class InGame_SceneController : SceneController
 {
+    public enum INGAME_STATE {IN_GAME, PAUSED, TERRAIN_MODIFYING }
+    public INGAME_STATE m_currentInGameState = INGAME_STATE.IN_GAME;
+
     [HideInInspector]
     public WorldController m_worldController = null;
+
+    [HideInInspector]
+    public TerrainModifier m_terrainModifier = null;
 
     private Entity[] m_sceneEntities;
     
@@ -30,6 +36,17 @@ public class InGame_SceneController : SceneController
 
         m_worldController.InitWorld();
 
+        m_terrainModifier = FindObjectOfType<TerrainModifier>();
+
+        if (m_terrainModifier == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogError(name + ": Unable to find TerrainModifer.cs, this is required within game scene");
+#endif
+            return;
+        }
+
+        m_terrainModifier.InitTerrainModifier();
 
         //Entities
         m_sceneEntities = FindObjectsOfType<Entity>();
@@ -50,6 +67,8 @@ public class InGame_SceneController : SceneController
     public override void Update()
     {
         base.Update();
+
+        m_terrainModifier.UpdateTerrainModifer();
 
         foreach (Entity entity in m_sceneEntities)
         {

@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class CommonEnums : MonoBehaviour
 {
+    public enum STEP_DIRECTION {BACKWARD = -1, FORWARD = -1 }
+
     public enum CARDIANL_DIRECTIONS {NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST }
 
     public enum ROT_DIRECTION { CLOCKWISE = 1, ANTI_CLOCKWISE = -1 }

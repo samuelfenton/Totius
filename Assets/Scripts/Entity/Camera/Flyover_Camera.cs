@@ -14,12 +14,15 @@ public class Flyover_Camera : Camera_Entity
     public float m_upSpeed = 10.0f;
     [Tooltip("Modifies the previous speed by this amount")]
     public float m_sprintModifierSpeed = 4.0f;
+    [Header("Camera Rot")]
     [Tooltip("degrees/s")]
     public float m_rotationSpeed = 90.0f;
-
+    [Tooltip("Camera looking angle in degrees, up and down")]
+    [Range(0.0f,90.0f)]
+    public float m_maxCameraAngle = 80.0f;
     //Cumulative translation/rot changes
     private Vector3 m_cumulativeTranslation = Vector3.zero;
-    private float m_cumulativeRotation = 0.0f;
+    private Vector2 m_cumulativeRotation = Vector2.zero;
     #endregion
 
     #region Cell Traversal Variables
@@ -32,6 +35,7 @@ public class Flyover_Camera : Camera_Entity
 
     #region Stored Variables
     private InGame_SceneController m_inGameSceneController = null;
+    private WorldController m_worldController = null;
     #endregion  
 
     /// <summary>
@@ -43,12 +47,7 @@ public class Flyover_Camera : Camera_Entity
         base.InitEntity();
 
         m_inGameSceneController = (InGame_SceneController)MasterController.Instance.m_sceneController;
-
-        //Find node selector and set it up
-        NodeSelector nodeSelector = FindObjectOfType<NodeSelector>();
-
-        if (nodeSelector != null)
-            nodeSelector.Init(gameObject);
+        m_worldController = m_inGameSceneController.m_worldController;
     }
 
     /// <summary>
@@ -71,9 +70,6 @@ public class Flyover_Camera : Camera_Entity
     public override void FixedUpdateEntity()
     {
         base.FixedUpdateEntity();
-
-        Debug.Log(m_cumulativeTranslation);
-
 
         ApplyCumulativeInput();
     }
@@ -100,7 +96,8 @@ public class Flyover_Camera : Camera_Entity
         m_cumulativeTranslation += globalMovement;
 
         //Get rotation
-        m_cumulativeRotation += MasterController.Instance.m_input.GetAxis(InputController.INPUT_AXIS.MOUSE_X) * m_rotationSpeed * Time.deltaTime;
+        m_cumulativeRotation.x += MasterController.Instance.m_input.GetAxis(InputController.INPUT_AXIS.LOOK_HORIZONTAL) * m_rotationSpeed * Time.deltaTime;
+        m_cumulativeRotation.y -= MasterController.Instance.m_input.GetAxis(InputController.INPUT_AXIS.LOOK_VERTICAL) * m_rotationSpeed * Time.deltaTime; //Defualt using minus to fix incorrect inversion, then use inverted check within equation
     }
 
     /// <summary>
@@ -113,9 +110,14 @@ public class Flyover_Camera : Camera_Entity
         m_cumulativeTranslation = Vector3.zero;
 
         //Apply cumulative rotation
-        transform.Rotate(Vector3.up, m_cumulativeRotation);
-        m_cumulativeRotation = 0.0f;
+        Vector3 localRot = MOARMaths.GetSignedEulerAngles(transform.localRotation.eulerAngles);
+        //Yaw - Left Right, infinite roation allowed
+        localRot.y += m_cumulativeRotation.x;
+        //Pitch - Up Down, clamped into -m_maxCameraAngle, m_maxCameraAngle
+        localRot.x = Mathf.Clamp(localRot.x + m_cumulativeRotation.y, -m_maxCameraAngle, m_maxCameraAngle);
+        transform.localRotation = Quaternion.Euler(localRot);
 
+        m_cumulativeRotation = Vector2.zero;
     }
 
     /// <summary>
@@ -127,11 +129,11 @@ public class Flyover_Camera : Camera_Entity
         if (!IsReadyForCellTraversal())
             return;
 
-        Vector2Int currentCell = m_inGameSceneController.m_worldController.DetermineCell(transform.position);
+        Vector2Int currentCell = m_worldController.DetermineCell(transform.position);
 
         if(currentCell != m_previousCell) //Ensure moved to new cell
         {
-            m_inGameSceneController.m_worldController.EnteredNewCell(currentCell);
+            m_worldController.EnteredNewCell(currentCell);
             m_previousCell = currentCell;
         }
     }

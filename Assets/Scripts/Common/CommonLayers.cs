@@ -19,6 +19,8 @@ public class CommonLayers : MonoBehaviour
     public static int m_pushBoxMask = 0;
     public static int m_pushBoxLayer = 0;
 
+    public static int m_cameraMask = 0;
+    public static int m_cameraLayer = 0;
 
     //-------------------
     //Get masks for future use
@@ -34,6 +36,8 @@ public class CommonLayers : MonoBehaviour
         m_hurtBoxMask = LayerMask.GetMask("Hurt Box");
         m_pushBoxMask = LayerMask.GetMask("Push Box");
 
+        m_cameraMask = LayerMask.GetMask("Camera");
+
         //Layer
         m_enviromentLayer = (int)Mathf.Log(m_enviromentMask, 2);
         m_terrainLayer = (int)Mathf.Log(m_terrainMask, 2);
@@ -42,5 +46,7 @@ public class CommonLayers : MonoBehaviour
         m_hitBoxLayer = (int)Mathf.Log(m_hitBoxMask, 2);
         m_hurtBoxLayer = (int)Mathf.Log(m_hurtBoxMask, 2);
         m_pushBoxLayer = (int)Mathf.Log(m_pushBoxMask, 2);
+
+        m_cameraLayer = (int)Mathf.Log(m_cameraMask, 2);
     }
 }

@@ -2,15 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Collider))]
 public class Entity : MonoBehaviour
 {
+    protected Rigidbody m_rigidbody = null;
+
     /// <summary>
     /// Initialise the entity
     /// Note: Dont use start/awake on entities, this ensures correct load order
     /// </summary>
     public virtual void InitEntity()
     {
-
+        m_rigidbody = GetComponent<Rigidbody>();
     }
 
     /// <summary>

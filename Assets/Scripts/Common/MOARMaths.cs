@@ -49,4 +49,20 @@ public class MOARMaths : MonoBehaviour
 
         return false;
     }
+
+    /// <summary>
+    /// Get a signed Vector3 of angles
+    /// Found here "https://answers.unity.com/questions/1693936/how-do-i-rotate-using-a-negative-angle-valuehow-to.html"
+    /// </summary>
+    /// <param name="angles">Orginal angle</param>
+    /// <returns>Angle using signs</returns>
+    public static Vector3 GetSignedEulerAngles(Vector3 angles)
+    {
+        Vector3 signedAngles = Vector3.zero;
+        for (int i = 0; i < 3; i++)
+        {
+            signedAngles[i] = (angles[i] + 180f) % 360f - 180f;
+        }
+        return signedAngles;
+    }
 }

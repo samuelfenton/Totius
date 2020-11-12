@@ -10,11 +10,15 @@ public class InputController : MonoBehaviour
 
     public bool m_inverted = false;
 
+    public float m_scrollDelay = 0.1f;
+    private bool m_canScrollFlag = false;
+    private int m_scrollVal = 0;
+
     public enum INPUT_KEY {SPRINT, DASH, BLOCK, LIGHT_ATTACK, HEAVY_ATTACK, INTERACT, MENU, KEY_COUNT };
     
     public enum INPUT_STATE { UP, DOWN, DOWNED };
 
-    public enum INPUT_AXIS {FORWARD, HORIZONTAL, VERTICAL, MOUSE_X, MOUSE_Y, SCROLL, AXIS_COUNT };
+    public enum INPUT_AXIS {FORWARD, HORIZONTAL, VERTICAL, LOOK_HORIZONTAL, LOOK_VERTICAL, AXIS_COUNT };
 
     //[HideInInspector]
     private INPUT_STATE[] m_keyVal = new INPUT_STATE[(int)INPUT_KEY.KEY_COUNT];
@@ -36,6 +40,8 @@ public class InputController : MonoBehaviour
         }
 
         m_intput = new InputAction_Gameplay();
+
+        m_canScrollFlag = true;
     }
 
     private void OnEnable()
@@ -46,6 +52,8 @@ public class InputController : MonoBehaviour
 
         m_intput.Player.LookHorizontal.Enable();
         m_intput.Player.LookVertical.Enable();
+
+        m_intput.Player.Scroll.Enable();
 
         m_intput.Player.Sprint.Enable();
         m_intput.Player.Block.Enable();
@@ -63,6 +71,8 @@ public class InputController : MonoBehaviour
 
         m_intput.Player.LookHorizontal.Disable();
         m_intput.Player.LookVertical.Disable();
+
+        m_intput.Player.Scroll.Disable();
 
         m_intput.Player.Sprint.Disable();
         m_intput.Player.Block.Disable();
@@ -82,8 +92,8 @@ public class InputController : MonoBehaviour
         m_axisVal[(int)INPUT_AXIS.HORIZONTAL] = m_intput.Player.Horizontal.ReadValue<float>();
         m_axisVal[(int)INPUT_AXIS.VERTICAL] = m_intput.Player.Vertical.ReadValue<float>();
 
-        m_axisVal[(int)INPUT_AXIS.MOUSE_X] = m_intput.Player.LookHorizontal.ReadValue<float>();
-        m_axisVal[(int)INPUT_AXIS.MOUSE_Y] = m_intput.Player.LookVertical.ReadValue<float>();
+        m_axisVal[(int)INPUT_AXIS.LOOK_HORIZONTAL] = m_intput.Player.LookHorizontal.ReadValue<float>();
+        m_axisVal[(int)INPUT_AXIS.LOOK_VERTICAL] = m_intput.Player.LookVertical.ReadValue<float>();
 
         m_keyVal[(int)INPUT_KEY.SPRINT] = DetermineInputState(m_intput.Player.Sprint.triggered, m_intput.Player.Sprint.ReadValue<float>());
         m_keyVal[(int)INPUT_KEY.BLOCK] = DetermineInputState(m_intput.Player.Block.triggered, m_intput.Player.Block.ReadValue<float>());
@@ -91,6 +101,8 @@ public class InputController : MonoBehaviour
         m_keyVal[(int)INPUT_KEY.HEAVY_ATTACK] = DetermineInputState(m_intput.Player.HeavyAttack.triggered, m_intput.Player.HeavyAttack.ReadValue<float>());
         m_keyVal[(int)INPUT_KEY.INTERACT] = DetermineInputState(m_intput.Player.Interact.triggered, m_intput.Player.Interact.ReadValue<float>());
         m_keyVal[(int)INPUT_KEY.MENU] = DetermineInputState(m_intput.Player.Menu.triggered, m_intput.Player.Menu.ReadValue<float>());
+
+        UpdateScroll();
     }
 
     //Reset each input to Keystate up, and set axis values to 0.0f
@@ -168,7 +180,7 @@ public class InputController : MonoBehaviour
     /// <returns>Value of Axis</returns>
     public float GetAxis(INPUT_AXIS p_input)
     {
-        if(p_input == INPUT_AXIS.MOUSE_Y)
+        if(p_input == INPUT_AXIS.LOOK_VERTICAL)
         {
             if (m_inverted)
                 return m_axisVal[(int)p_input] * -1;
@@ -177,6 +189,45 @@ public class InputController : MonoBehaviour
         if (p_input < INPUT_AXIS.AXIS_COUNT)
             return m_axisVal[(int)p_input];
         return 0.0f;
+    }
+
+    /// <summary>
+    /// Get zooming click
+    /// This contains delays within
+    /// </summary>
+    /// <returns></returns>
+    private void UpdateScroll()
+    {
+        float scrollVal = m_intput.Player.Scroll.ReadValue<float>();
+
+        if (m_canScrollFlag && scrollVal != 0.0f) //Able to scroll
+        {
+            m_scrollVal = scrollVal >= 0.0f ? 1 : -1;
+
+            m_canScrollFlag = false;
+
+            StartCoroutine(ResetCanScrollFlag());
+        }
+        else //Unable to scorll, set default value
+        {
+            m_scrollVal = 0;
+        }
+    }
+
+    private IEnumerator ResetCanScrollFlag()
+    {
+        yield return new WaitForSeconds(m_scrollDelay);
+
+        m_canScrollFlag = true;
+    }
+
+    /// <summary>
+    /// Get the current scroll value
+    /// </summary>
+    /// <returns>Scroll value</returns>
+    public int GetScroll()
+    {
+        return m_scrollVal;
     }
 
     /// <summary>
