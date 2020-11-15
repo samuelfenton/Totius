@@ -174,7 +174,7 @@ public class @InputAction_Gameplay : IInputActionCollection, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""ac7a3989-700e-4bde-8e1f-b0b87e605016"",
-                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Controller"",

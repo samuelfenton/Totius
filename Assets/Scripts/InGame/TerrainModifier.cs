@@ -61,8 +61,16 @@ public class TerrainModifier : MonoBehaviour
                 }
                 break;
             case TERRAIN_TOOL.LEVEL:
+                if (MasterController.Instance.m_input.GetKey(InputController.INPUT_KEY.LIGHT_ATTACK) == InputController.INPUT_STATE.DOWNED)
+                {
+                    Level();
+                }
                 break;
             case TERRAIN_TOOL.SMOOTH:
+                if (MasterController.Instance.m_input.GetKey(InputController.INPUT_KEY.LIGHT_ATTACK) == InputController.INPUT_STATE.DOWNED)
+                {
+                    Smooth();
+                }
                 break;
             default:
                 break;
@@ -80,11 +88,12 @@ public class TerrainModifier : MonoBehaviour
     {
         Node[] groupedNodes = m_nodeSelector.m_storedNodeGroup;
 
-        float modifyAmount = p_direction == CommonEnums.STEP_DIRECTION.FORWARD ? 0.25f : -0.25f;
+        if (groupedNodes.Length == 0)
+            return;
 
         for (int nodeIndex = 0; nodeIndex < groupedNodes.Length; nodeIndex++)
         {
-            groupedNodes[nodeIndex].ModifyElevation(modifyAmount);
+            groupedNodes[nodeIndex].ModifyElevation((int)p_direction);
         }
 
         m_worldController.UpdateMeshNodeGroup(groupedNodes);
@@ -97,7 +106,20 @@ public class TerrainModifier : MonoBehaviour
     /// </summary>
     private void Level()
     {
+        Node[] groupedNodes = m_nodeSelector.m_storedNodeGroup;
 
+        Node centralNode = m_nodeSelector.m_selectedNode;
+
+        if (groupedNodes.Length == 0 || centralNode == null)
+            return;
+
+        float centralElevation = centralNode.m_elevation;
+
+        MoveTowardsElevation(groupedNodes, centralElevation);
+
+        m_worldController.UpdateMeshNodeGroup(groupedNodes);
+
+        m_nodeSelector.UpdateSelection();
     }
 
     /// <summary>
@@ -105,6 +127,55 @@ public class TerrainModifier : MonoBehaviour
     /// </summary>
     private void Smooth()
     {
+        Node[] groupedNodes = m_nodeSelector.m_storedNodeGroup;
 
+        if (groupedNodes.Length <=1)//Ignore if only one point
+            return;
+
+        float averageHeight = 0.0f;
+
+        //Get average
+        for (int nodeIndex = 0; nodeIndex < groupedNodes.Length; nodeIndex++)
+        {
+            averageHeight += groupedNodes[nodeIndex].m_elevation;
+        }
+
+        averageHeight = MOARMaths.SnapTowardsIncrement(averageHeight / groupedNodes.Length, CommonData.ELEVATION_INCREMENT);
+
+        //Apply to nodes
+        MoveTowardsElevation(groupedNodes, averageHeight);
+
+        m_worldController.UpdateMeshNodeGroup(groupedNodes);
+
+        m_nodeSelector.UpdateSelection();
+    }
+
+    /// <summary>
+    /// Move gorup of nodes towards a single elevation
+    /// </summary>
+    /// <param name="p_groupedNodes">Nodes to move</param>
+    /// <param name="p_targetElevation">Target elevation</param>
+    private void MoveTowardsElevation(Node[] p_groupedNodes, float p_targetElevation)
+    {
+        //Apply to nodes
+        for (int nodeIndex = 0; nodeIndex < p_groupedNodes.Length; nodeIndex++)
+        {
+            Node modifyingNode = p_groupedNodes[nodeIndex];
+
+            float elevaitonDif = p_targetElevation - modifyingNode.m_elevation;
+
+            if (elevaitonDif > CommonData.ELEVATION_INCREMENT_HALF) //Its higher, move up
+            {
+                modifyingNode.ModifyElevation(1);
+            }
+            else if (elevaitonDif < -CommonData.ELEVATION_INCREMENT_HALF)//Its lower, move down
+            {
+                modifyingNode.ModifyElevation(-1);
+            }
+            else//Approx no dif, hard set
+            {
+                modifyingNode.SetElevation(p_targetElevation);
+            }
+        }
     }
 }

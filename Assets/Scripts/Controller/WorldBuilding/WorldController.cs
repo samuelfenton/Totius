@@ -87,7 +87,7 @@ public class WorldController : MonoBehaviour
 
         m_meshTexture = new Texture2D(Cell.CELL_SIZE * 3, Cell.CELL_SIZE * 3);
 
-        meshRenderer.material.mainTexture = m_meshTexture;
+        meshRenderer.material.SetTexture("Main_Texture", m_meshTexture);
 
         //TODO if has save files
 
@@ -270,6 +270,11 @@ public class WorldController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Given a new new set of verts update everything
+    /// </summary>
+    /// <param name="p_verts">All verts</param>
+    /// <param name="p_textureColors">Texture Colours</param>
     private void RebuiltMesh(Vector3[] p_verts, Color[] p_textureColors)
     {
         m_mesh.vertices = p_verts;

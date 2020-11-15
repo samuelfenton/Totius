@@ -5,6 +5,11 @@ using UnityEngine;
 public class CommonData : MonoBehaviour
 {
     public static float NODE_MAX_HEIGHT = 20.0f;
+    public static int NODE_VERTICAL_COUNT = 80;
+    public static float NODE_INCREMENT = NODE_MAX_HEIGHT / NODE_VERTICAL_COUNT;
+    public static float NODE_INCREMENT_HALF = NODE_INCREMENT / 2.0f;
+    public static float ELEVATION_INCREMENT = 1.0f / NODE_VERTICAL_COUNT;
+    public static float ELEVATION_INCREMENT_HALF = ELEVATION_INCREMENT / 2.0f;
 
     // OCEAN, BEACH, PLAINS, HILL, CLIFF, MOUNTAIN_TOP, LAKE, DESERT, RAIN_FOREST
     public static Dictionary<CommonEnums.NODE_BIOME, float> m_biomeTravelCost = new Dictionary<CommonEnums.NODE_BIOME, float> { 

@@ -5,15 +5,27 @@ using UnityEngine.SceneManagement;
 
 public class MOARMaths : MonoBehaviour
 {
+    /// <summary>
+    /// Get the sqr distance of a single vector
+    /// Faster then using magnitude 
+    /// </summary>
+    /// <param name="p_lhs">first vector</param>
+    /// <returns>sqr distance</returns>
     public static float SqrMagnitude(Vector3 p_val)
     {
         return p_val.x * p_val.x + p_val.y * p_val.y + p_val.z * p_val.z;
     }
 
+    /// <summary>
+    /// Get the sqr distance between two vectors
+    /// Faster then using magnitude
+    /// </summary>
+    /// <param name="p_lhs">first vector</param>
+    /// <param name="p_rhs">second vectos</param>
+    /// <returns>sqr distance</returns>
     public static float SqrDistance(Vector3 p_lhs, Vector3 p_rhs)
     {
-        Vector3 distance = p_rhs - p_lhs;
-        return distance.x * distance.x + distance.y * distance.y + distance.z * distance.z;
+        return (p_rhs.x - p_lhs.x) * (p_rhs.x - p_lhs.x) + (p_rhs.y - p_lhs.y) * (p_rhs.y - p_lhs.y) + (p_rhs.z - p_lhs.z) * (p_rhs.z - p_lhs.z);
     }
 
     /// <summary>
@@ -27,6 +39,28 @@ public class MOARMaths : MonoBehaviour
     {
         float alignment = Vector3.Dot(Vector3.one, p_vector);
         return p_vector.magnitude * alignment;
+    }
+
+    /// <summary>
+    /// Snap towards an increment
+    /// </summary>
+    /// <param name="p_originalValue">Value to use for sanpping</param>
+    /// <param name="p_increment">Increments to snap towards</param>
+    /// <returns>Snapped value</returns>
+    public static float SnapTowardsIncrement(float p_originalValue, float p_increment)
+    {
+        float snappedVal = (Mathf.FloorToInt(p_originalValue / p_increment)) * p_increment;
+
+        if (p_originalValue < 0.0f) //Due to how floor works, negative will always round down one extra
+            snappedVal += p_increment;
+
+        float leftover = p_originalValue - snappedVal;
+
+        if(Mathf.Abs(leftover) > (p_increment/2.0f))
+        {
+            snappedVal += p_originalValue >= 0.0f ? p_increment : -p_increment; //For negative, add upwatds
+        }
+        return snappedVal;
     }
 
     /// <summary>

@@ -2,6 +2,8 @@
 
 public class Node
 {
+    public const float HEIGHT_INCREMENT = 0.25f;
+
     public Vector2Int m_nodeGrid = Vector2Int.zero;
     public Vector2Int m_globalNodeGrid = Vector2Int.zero;
     public Vector3 m_globalPosition = Vector3.zero;
@@ -28,7 +30,7 @@ public class Node
     {
         m_nodeGrid = p_localGrid;
 
-        m_elevation = Mathf.Clamp(p_elevation, 0.0f, 1.0f);
+        m_elevation = Mathf.Clamp(MOARMaths.SnapTowardsIncrement(p_elevation, CommonData.ELEVATION_INCREMENT), 0.0f, 1.0f);
         m_moisture = Mathf.Clamp(p_moisture, 0.0f, 1.0f);
         m_parentCell = p_parentCell;
         
@@ -40,13 +42,25 @@ public class Node
     }
 
     /// <summary>
-    /// Modify elevation by distance
-    /// Still clamps
+    /// Modify elevation using distance to change
     /// </summary>
-    /// <param name="p_newVal">New value</param>
-    public void ModifyElevation(float p_value)
+    /// <param name="p_steps">distance to move</param>
+    public void ModifyElevation(float p_distance)
     {
-        m_elevation = Mathf.Clamp(m_elevation + (p_value / CommonData.NODE_MAX_HEIGHT), 0.0f, 1.0f); // p_value/CommonData.NODE_MAX_HEIGHT to get actual elevation change for a given distance
+        int stepCount = Mathf.RoundToInt(p_distance / CommonData.NODE_VERTICAL_COUNT);
+
+        m_elevation = Mathf.Clamp(m_elevation + stepCount * CommonData.ELEVATION_INCREMENT, 0.0f, 1.0f); // p_value/CommonData.NODE_MAX_HEIGHT to get actual elevation change for a given distance
+
+        UpdateStats();
+    }
+
+    /// <summary>
+    /// Modify elevation using step changes
+    /// </summary>
+    /// <param name="p_steps">how many steps to take</param>
+    public void ModifyElevation(int p_steps)
+    {
+        m_elevation = Mathf.Clamp(m_elevation + p_steps * CommonData.ELEVATION_INCREMENT, 0.0f, 1.0f); // p_value/CommonData.NODE_MAX_HEIGHT to get actual elevation change for a given distance
 
         UpdateStats();
     }
@@ -95,6 +109,8 @@ public class Node
         m_nodeBiome = CommonData.GetNodeBiome(m_elevation, m_moisture);
         m_nodeType = CommonData.GetNodeType(m_nodeBiome);
 
-        m_globalPosition = new Vector3(m_parentCell.m_cellGrid.x * Cell.CELL_SIZE + m_nodeGrid.x, m_elevation * CommonData.NODE_MAX_HEIGHT, m_parentCell.m_cellGrid.y * Cell.CELL_SIZE + m_nodeGrid.y);
+        float height = MOARMaths.SnapTowardsIncrement(m_elevation * CommonData.NODE_MAX_HEIGHT, HEIGHT_INCREMENT);
+
+        m_globalPosition = new Vector3(m_parentCell.m_cellGrid.x * Cell.CELL_SIZE + m_nodeGrid.x, height, m_parentCell.m_cellGrid.y * Cell.CELL_SIZE + m_nodeGrid.y);
     }
 }

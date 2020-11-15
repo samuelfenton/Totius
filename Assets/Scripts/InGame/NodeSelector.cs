@@ -154,7 +154,7 @@ public class NodeSelector : MonoBehaviour
     private InGame_SceneController m_inGameSceneController = null;
     #endregion  
 
-    public Node m_storedNode = null;
+    public Node m_selectedNode = null;
     public Node[] m_storedNodeGroup = new Node[0];
 
     private Queue<KeyValuePair<GameObject, MeshRenderer>> m_selectorsFree = new Queue<KeyValuePair<GameObject, MeshRenderer>>();
@@ -169,7 +169,7 @@ public class NodeSelector : MonoBehaviour
         m_inGameSceneController = (InGame_SceneController)MasterController.Instance.m_sceneController;
 
         //Reset Variables
-        m_storedNode = null;
+        m_selectedNode = null;
         m_storedNodeGroup = new Node[0];
 
         if (m_selectorPrefab == null)
@@ -219,15 +219,15 @@ public class NodeSelector : MonoBehaviour
 
         if(currentSelected == null) //Found no nodes
         {
-            if(m_storedNode != null)//Previously was on one, disable and update sotred variables
+            if(m_selectedNode != null)//Previously was on one, disable and update sotred variables
             {
-                m_storedNode = currentSelected;
+                m_selectedNode = currentSelected;
                 UpdateSelection();
             }
         }
-        else if(m_storedNode != currentSelected)//Moved to new node
+        else if(m_selectedNode != currentSelected)//Moved to new node
         {
-            m_storedNode = currentSelected;
+            m_selectedNode = currentSelected;
             UpdateSelection();
         }
     }
@@ -247,13 +247,13 @@ public class NodeSelector : MonoBehaviour
             m_selectorsFree.Enqueue(currentSelector);
         }
 
-        if (m_storedNode == null)
+        if (m_selectedNode == null)
         {
             m_storedNodeGroup = new Node[0];
         }
         else
         {
-            transform.position = m_storedNode.m_globalPosition;
+            transform.position = m_selectedNode.m_globalPosition;
 
             //Get group of nodes as needed
             Vector2Int[] offsets = m_selectionDirs[m_selectionType];
@@ -261,7 +261,7 @@ public class NodeSelector : MonoBehaviour
 
             for (int offsetIndex = 0; offsetIndex < offsets.Length; offsetIndex++)
             {
-                Node offsetNode = m_inGameSceneController.m_worldController.GetNodeFromOffset(m_storedNode, offsets[offsetIndex]);
+                Node offsetNode = m_inGameSceneController.m_worldController.GetNodeFromOffset(m_selectedNode, offsets[offsetIndex]);
 
                 if(offsetNode!= null && m_selectorsFree.Count > 0)
                 {

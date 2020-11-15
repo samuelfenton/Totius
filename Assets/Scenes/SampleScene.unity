@@ -232,11 +232,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 496763306335068319, guid: 4c657f4f61a113c4082ddcd3df2348fb, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 496763306335068319, guid: 4c657f4f61a113c4082ddcd3df2348fb, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -10
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 496763306335068319, guid: 4c657f4f61a113c4082ddcd3df2348fb, type: 3}
       propertyPath: m_LocalRotation.x
@@ -665,6 +665,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1280417241450159710, guid: 66b723daa5e2eb24288b6b4ee4fd1947, type: 3}
+      propertyPath: m_currentTerrainTool
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2377308467952124600, guid: 66b723daa5e2eb24288b6b4ee4fd1947, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
