@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class Flyover_Camera : Camera_Entity
 {
     #region Movement Variables
@@ -21,6 +22,9 @@ public class Flyover_Camera : Camera_Entity
     [Range(0.0f,90.0f)]
     public float m_maxCameraAngle = 80.0f;
     //Cumulative translation/rot changes
+
+    private Rigidbody m_rigidBody = null;
+
     private Vector3 m_cumulativeTranslation = Vector3.zero;
     private Vector2 m_cumulativeRotation = Vector2.zero;
     #endregion
@@ -45,6 +49,8 @@ public class Flyover_Camera : Camera_Entity
     public override void InitEntity()
     {
         base.InitEntity();
+
+        m_rigidBody = GetComponent<Rigidbody>();
 
         m_inGameSceneController = (InGame_SceneController)MasterController.Instance.m_sceneController;
         m_worldController = m_inGameSceneController.m_worldController;
@@ -106,7 +112,7 @@ public class Flyover_Camera : Camera_Entity
     private void ApplyCumulativeInput()
     {
         //Apply cumulative translation
-        transform.position += m_cumulativeTranslation;
+        m_rigidBody.MovePosition(transform.position + m_cumulativeTranslation);
         m_cumulativeTranslation = Vector3.zero;
 
         //Apply cumulative rotation

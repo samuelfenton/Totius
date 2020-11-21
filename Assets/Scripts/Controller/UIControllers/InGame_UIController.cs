@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class InGame_UIController : UIController
 {
+    public UI_Toolbar m_UIToolbar = null;
+
     /// <summary>
     /// Initialise the UI controller, should be called from scene controller
     /// Note: Dont use start/awake on controller, this ensures correct load order
@@ -11,6 +13,8 @@ public class InGame_UIController : UIController
     public override void InitUI()
     {
         base.InitUI();
+
+        m_UIToolbar = GetComponentInChildren<UI_Toolbar>();
     }
 
     /// <summary>
