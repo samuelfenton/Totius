@@ -43,10 +43,6 @@ public class InputController : MonoBehaviour
 
         m_canScrollFlag = true;
 
-        MOARMaths.SnapTowardsIncrement(1.2f, 1.0f);
-        MOARMaths.SnapTowardsIncrement(1.8f, 1.0f);
-        MOARMaths.SnapTowardsIncrement(-1.8f, 1.0f);
-
     }
 
     private void OnEnable()
